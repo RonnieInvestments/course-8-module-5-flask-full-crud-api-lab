@@ -22,7 +22,7 @@ def find_event_by_id(event_id):
     for event in events:
         if event.id == event_id:
             return event
-        return None
+    return None
 
 # Create a new event from JSON input
 @app.route("/events", methods=["POST"])
