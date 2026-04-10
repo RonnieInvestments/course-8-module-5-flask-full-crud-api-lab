@@ -16,51 +16,54 @@ events = [
     Event(1, "Tech Meetup"),
     Event(2, "Python Workshop")
 ]
+# Helper function to find_event_by_id
+def find_event_by_id(event_id):
+
+    for event in events:
+        if event.id == event_id:
+            return event
+        return None
 
 # Create a new event from JSON input
 @app.route("/events", methods=["POST"])
 def create_event():
-    global next_id
     data = request.get_json()
 
     if not data or "title" not in data:
         return jsonify({"error":"Title is required"}), 400
     
-    new_event = Event(next_id, data["title"])
+    new_id = max(event.id for event in events) + 1 if events else 1
+    new_event = Event(new_id, data["title"])
     events.append(new_event)
-
-    next_id += 1
 
     return jsonify(new_event.to_dict()), 201
 
 # Update the title of an existing event
 @app.route("/events/<int:event_id>", methods=["PATCH"])
 def update_event(event_id):
+    event = find_event_by_id(event_id)
+    if not event:
+        return jsonify({"error":"Title is required"}), 404
+    
     data = request.get_json()
 
     if not data or "title" not in data:
         return jsonify({"error":"Title is required"}), 400
-
-    for event in events:
-        if event.id == event_id:
-            event.title = data["title"]
-
-            return jsonify(event.to_dict()), 200
     
-    return jsonify({"error":"Event not found"}), 404
+    event.title = data["title"]
+    return jsonify(event.to_dict()), 200
 
 # Remove an event from the list
 @app.route("/events/<int:event_id>", methods=["DELETE"])
 def delete_event(event_id):
-    global events
+    event = find_event_by_id(event_id)
 
-    for event in events:
-        if event.id == event_id:
-            events.remove(event)
+    if not event:
+        return jsonify({"error":"Event not found"}), 404
+    
+    events.remove(event)
+    return "", 204
 
-            return jsonify({"message":"Event deleted"}), 200
-        
-    return jsonify({"error":"Event not found"}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
